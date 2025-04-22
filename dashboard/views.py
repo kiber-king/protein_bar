@@ -1,24 +1,22 @@
 from django.shortcuts import render
-from parameters.models import ProductionParameters
 from django.db.models import Avg
-from django.utils import timezone
-from datetime import timedelta
+from parameters.models import ProductionParameters
 
 def dashboard(request):
-    # Получаем данные за последние 24 часа
-    last_24h = timezone.now() - timedelta(hours=24)
-    parameters = ProductionParameters.objects.filter(timestamp__gte=last_24h)
+    # Получаем последние параметры
+    latest_params = ProductionParameters.objects.first()
     
-    # Рассчитываем средние значения
-    avg_values = parameters.aggregate(
-        avg_temperature=Avg('temperature'),
-        avg_humidity=Avg('humidity'),
-        avg_pressure=Avg('pressure'),
-        avg_mixing_speed=Avg('mixing_speed')
-    )
-    
+    # Если параметров еще нет, используем значения по умолчанию
+    current_temperature = latest_params.temperature if latest_params else 0
+    current_humidity = latest_params.humidity if latest_params else 0
+    current_pressure = latest_params.pressure if latest_params else 0
+    current_speed = latest_params.speed if latest_params else 0
+
     context = {
-        'parameters': parameters,
-        'avg_values': avg_values,
+        'current_temperature': current_temperature,
+        'current_humidity': current_humidity,
+        'current_pressure': current_pressure,
+        'current_speed': current_speed,
     }
+    
     return render(request, 'dashboard.html', context)

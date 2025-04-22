@@ -1,112 +1,125 @@
 {% extends 'base.html' %}
 
+{% block title %}Дашборд - ИУС Протеиновые Батончики{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .metric-card {
+        background: linear-gradient(45deg, #2c3e50, #3498db);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .metric-value {
+        font-size: 2em;
+        font-weight: bold;
+    }
+    .metric-label {
+        font-size: 1.1em;
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row">
+<div class="row mb-4">
     <div class="col-12">
-        <h1 class="mb-4">Дашборд производства</h1>
+        <h1 class="display-4 mb-4">
+            <i class="fas fa-chart-line me-2"></i>Мониторинг производства
+        </h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-value">{{ current_temperature }}°C</div>
+            <div class="metric-label">Температура</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-value">{{ current_humidity }}%</div>
+            <div class="metric-label">Влажность</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-value">{{ current_pressure }} бар</div>
+            <div class="metric-label">Давление</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-value">{{ current_speed }} м/мин</div>
+            <div class="metric-label">Скорость конвейера</div>
+        </div>
     </div>
 </div>
 
 <div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Температура</h5>
-                <div id="temperatureChart"></div>
-            </div>
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h3><i class="fas fa-thermometer-half me-2"></i>Температура</h3>
+            <div id="temperature-chart"></div>
         </div>
     </div>
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Влажность</h5>
-                <div id="humidityChart"></div>
-            </div>
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h3><i class="fas fa-tint me-2"></i>Влажность</h3>
+            <div id="humidity-chart"></div>
         </div>
     </div>
 </div>
 
 <div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Давление</h5>
-                <div id="pressureChart"></div>
-            </div>
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h3><i class="fas fa-compress-arrows-alt me-2"></i>Давление</h3>
+            <div id="pressure-chart"></div>
         </div>
     </div>
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Скорость перемешивания</h5>
-                <div id="mixingSpeedChart"></div>
-            </div>
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h3><i class="fas fa-tachometer-alt me-2"></i>Скорость конвейера</h3>
+            <div id="speed-chart"></div>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-function updateCharts() {
-    $.get('/api/parameters/', function(data) {
-        const timestamps = data.map(item => new Date(item.timestamp));
-        const temperatures = data.map(item => item.temperature);
-        const humidities = data.map(item => item.humidity);
-        const pressures = data.map(item => item.pressure);
-        const mixingSpeeds = data.map(item => item.mixing_speed);
+    function updateCharts() {
+        fetch('/api/parameters/')
+            .then(response => response.json())
+            .then(data => {
+                // Обновление графиков с новыми данными
+                const temperatureData = {
+                    x: data.timestamps,
+                    y: data.temperatures,
+                    type: 'scatter',
+                    name: 'Температура'
+                };
+                Plotly.newPlot('temperature-chart', [temperatureData], {
+                    title: 'График температуры',
+                    yaxis: {title: 'Температура (°C)'}
+                });
 
-        const temperatureTrace = {
-            x: timestamps,
-            y: temperatures,
-            type: 'scatter',
-            name: 'Температура'
-        };
+                // Аналогично для других графиков
+                // ...
+            });
+    }
 
-        const humidityTrace = {
-            x: timestamps,
-            y: humidities,
-            type: 'scatter',
-            name: 'Влажность'
-        };
-
-        const pressureTrace = {
-            x: timestamps,
-            y: pressures,
-            type: 'scatter',
-            name: 'Давление'
-        };
-
-        const mixingSpeedTrace = {
-            x: timestamps,
-            y: mixingSpeeds,
-            type: 'scatter',
-            name: 'Скорость перемешивания'
-        };
-
-        Plotly.newPlot('temperatureChart', [temperatureTrace], {
-            title: 'График температуры',
-            yaxis: {title: 'Температура (°C)'}
-        });
-
-        Plotly.newPlot('humidityChart', [humidityTrace], {
-            title: 'График влажности',
-            yaxis: {title: 'Влажность (%)'}
-        });
-
-        Plotly.newPlot('pressureChart', [pressureTrace], {
-            title: 'График давления',
-            yaxis: {title: 'Давление (бар)'}
-        });
-
-        Plotly.newPlot('mixingSpeedChart', [mixingSpeedTrace], {
-            title: 'График скорости перемешивания',
-            yaxis: {title: 'Скорость (об/мин)'}
-        });
-    });
-}
-
-$(document).ready(function() {
-    updateCharts();
+    // Обновление каждые 5 секунд
     setInterval(updateCharts, 5000);
-});
+    updateCharts(); // Начальное обновление
 </script>
 {% endblock %} 
