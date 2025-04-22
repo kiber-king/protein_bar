@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Дашборд производства</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Температура</h5>
+                <div id="temperatureChart"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Влажность</h5>
+                <div id="humidityChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Давление</h5>
+                <div id="pressureChart"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Скорость перемешивания</h5>
+                <div id="mixingSpeedChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateCharts() {
+    $.get('/api/parameters/', function(data) {
+        const timestamps = data.map(item => new Date(item.timestamp));
+        const temperatures = data.map(item => item.temperature);
+        const humidities = data.map(item => item.humidity);
+        const pressures = data.map(item => item.pressure);
+        const mixingSpeeds = data.map(item => item.mixing_speed);
+
+        const temperatureTrace = {
+            x: timestamps,
+            y: temperatures,
+            type: 'scatter',
+            name: 'Температура'
+        };
+
+        const humidityTrace = {
+            x: timestamps,
+            y: humidities,
+            type: 'scatter',
+            name: 'Влажность'
+        };
+
+        const pressureTrace = {
+            x: timestamps,
+            y: pressures,
+            type: 'scatter',
+            name: 'Давление'
+        };
+
+        const mixingSpeedTrace = {
+            x: timestamps,
+            y: mixingSpeeds,
+            type: 'scatter',
+            name: 'Скорость перемешивания'
+        };
+
+        Plotly.newPlot('temperatureChart', [temperatureTrace], {
+            title: 'График температуры',
+            yaxis: {title: 'Температура (°C)'}
+        });
+
+        Plotly.newPlot('humidityChart', [humidityTrace], {
+            title: 'График влажности',
+            yaxis: {title: 'Влажность (%)'}
+        });
+
+        Plotly.newPlot('pressureChart', [pressureTrace], {
+            title: 'График давления',
+            yaxis: {title: 'Давление (бар)'}
+        });
+
+        Plotly.newPlot('mixingSpeedChart', [mixingSpeedTrace], {
+            title: 'График скорости перемешивания',
+            yaxis: {title: 'Скорость (об/мин)'}
+        });
+    });
+}
+
+$(document).ready(function() {
+    updateCharts();
+    setInterval(updateCharts, 5000);
+});
+</script>
+{% endblock %} 

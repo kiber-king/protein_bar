@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Управление параметрами производства</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Установка параметров</h5>
+                <form id="parametersForm">
+                    <div class="mb-3">
+                        <label for="temperature" class="form-label">Температура (°C)</label>
+                        <input type="number" class="form-control" id="temperature" name="temperature" step="0.1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="humidity" class="form-label">Влажность (%)</label>
+                        <input type="number" class="form-control" id="humidity" name="humidity" step="0.1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pressure" class="form-label">Давление (бар)</label>
+                        <input type="number" class="form-control" id="pressure" name="pressure" step="0.1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="mixingSpeed" class="form-label">Скорость перемешивания (об/мин)</label>
+                        <input type="number" class="form-control" id="mixingSpeed" name="mixing_speed" step="1" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Сохранить параметры</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Текущие параметры</h5>
+                <div id="currentParameters">
+                    <p>Загрузка...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateCurrentParameters() {
+    $.get('/api/parameters/', function(data) {
+        if (data.length > 0) {
+            const latest = data[0];
+            $('#currentParameters').html(`
+                <p><strong>Температура:</strong> ${latest.temperature}°C</p>
+                <p><strong>Влажность:</strong> ${latest.humidity}%</p>
+                <p><strong>Давление:</strong> ${latest.pressure} бар</p>
+                <p><strong>Скорость перемешивания:</strong> ${latest.mixing_speed} об/мин</p>
+                <p><strong>Последнее обновление:</strong> ${new Date(latest.timestamp).toLocaleString()}</p>
+            `);
+        }
+    });
+}
+
+$(document).ready(function() {
+    updateCurrentParameters();
+    setInterval(updateCurrentParameters, 5000);
+
+    $('#parametersForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = {
+            temperature: parseFloat($('#temperature').val()),
+            humidity: parseFloat($('#humidity').val()),
+            pressure: parseFloat($('#pressure').val()),
+            mixing_speed: parseInt($('#mixingSpeed').val())
+        };
+
+        $.ajax({
+            url: '/api/parameters/',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                alert('Параметры успешно сохранены');
+                updateCurrentParameters();
+            },
+            error: function() {
+                alert('Ошибка при сохранении параметров');
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 
